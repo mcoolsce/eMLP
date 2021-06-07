@@ -325,7 +325,6 @@ class Model(tf.Module):
             bounds = list(zip(lower, upper))
             result = minimize(cost, init_centers.flatten(), jac = True, options = {'maxiter' : maxiter}, bounds = bounds, method = 'L-BFGS-B')
             jac_evaluations = result.nfev
-            print(jac_evaluations)
         else:
             result = minimize(cost, init_centers.flatten(), jac = True, options = {'maxiter' : maxiter})
             jac_evaluations = result.njev

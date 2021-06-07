@@ -6,7 +6,7 @@ from .help_functions import XYZLogger
 
 
 class ModelPart(ForcePart):
-    def __init__(self, system, model, centers, efield = [0, 0, 0], log_name = 'md.xyz', nprint = 1):
+    def __init__(self, system, model, centers, efield = [0, 0, 0], log_name = 'md.xyz', nprint = 1, print_opt_steps = False):
         ForcePart.__init__(self, 'ml_ff', system)
         self.system = system
         self.model = model
@@ -14,6 +14,7 @@ class ModelPart(ForcePart):
         self.nprint = nprint
         self.efield = efield
         self.log_name = log_name
+        self.print_opt_steps = print_opt_steps
         if self.system.cell.nvec == 0:
             self.abs_centers = centers
         else:
@@ -44,7 +45,7 @@ class ModelPart(ForcePart):
             list_of_properties.append('forces')
         if not vtens is None:
             list_of_properties.append('vtens')
-        output = self.model.compute(positions, numbers, centers, efield = self.efield, rvec = rvec, list_of_properties = list_of_properties, max_disp = max_disp)
+        output = self.model.compute(positions, numbers, centers, efield = self.efield, rvec = rvec, list_of_properties = list_of_properties, max_disp = max_disp, verbose=self.print_opt_steps)
         
         if not vtens is None:
             vtens[:, :] = output['vtens'] * electronvolt
@@ -136,8 +137,8 @@ def Optimize(model, positions, numbers, centers, rvec = np.eye(3) * 100, log = N
     return opt_positions, opt_centers, opt_rvec
     
     
-def NVE(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, temp = 300, start = 0, name = 'md', screenprint = 1000):
-    ff = ForceField(system, [ModelPart(system, model, centers, efield = efield, log_name = name + '.xyz', nprint = nprint)])
+def NVE(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, temp = 300, start = 0, name = 'md', screenprint = 1000, print_opt_steps = False):
+    ff = ForceField(system, [ModelPart(system, model, centers, efield = efield, log_name = name + '.xyz', nprint = nprint, print_opt_steps = print_opt_steps)])
     f = h5.File(name + '.h5', mode = 'w')
     hdf5_writer = HDF5Writer(f, start = start, step = nprint)
     sl = VerletScreenLog(step = screenprint)
@@ -146,8 +147,8 @@ def NVE(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, 
     f.close()
     
     
-def NVT(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, temp = 300, start = 0, name = 'md', screenprint = 1000):
-    ff = ForceField(system, [ModelPart(system, model, centers, efield = efield, log_name = name + '.xyz', nprint = nprint)])
+def NVT(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, temp = 300, start = 0, name = 'md', screenprint = 1000, print_opt_steps = False):
+    ff = ForceField(system, [ModelPart(system, model, centers, efield = efield, log_name = name + '.xyz', nprint = nprint, print_opt_steps = print_opt_steps)])
     thermo = NHCThermostat(temp = temp)
     f = h5.File(name + '.h5', mode = 'w')
     hdf5_writer = HDF5Writer(f, start = start, step = nprint)
@@ -157,8 +158,8 @@ def NVT(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, 
     f.close()
     
 
-def NPT(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, temp = 300, start = 0, name = 'run', screenprint = 1000, pressure = 1e+05 * pascal):
-    ff = ForceField(system, [ModelPart(system, model, centers, efield = efield, log_name = name + '.xyz', nprint = nprint)])
+def NPT(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, temp = 300, start = 0, name = 'run', screenprint = 1000, pressure = 1e+05 * pascal, print_opt_steps = False):
+    ff = ForceField(system, [ModelPart(system, model, centers, efield = efield, log_name = name + '.xyz', nprint = nprint, print_opt_steps = print_opt_steps)])
     thermo = NHCThermostat(temp = temp)
     baro = MTKBarostat(ff, temp = temp, press = pressure)
     tbc = TBCombination(thermo, baro)
@@ -170,8 +171,8 @@ def NPT(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, 
     f.close()
     
     
-def NVsigmaT(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, temp = 300, start = 0, name = 'run', screenprint = 1000, pressure = 1e+05 * pascal):
-    ff = ForceField(system, [ModelPart(system, model, centers, efield = efield, log_name = name + '.xyz', nprint = nprint)])
+def NVsigmaT(system, model, steps, centers, efield = [0, 0, 0], nprint = 10, dt = 1, temp = 300, start = 0, name = 'run', screenprint = 1000, pressure = 1e+05 * pascal, print_opt_steps = False):
+    ff = ForceField(system, [ModelPart(system, model, centers, efield = efield, log_name = name + '.xyz', nprint = nprint, print_opt_steps = print_opt_steps)])
     thermo = NHCThermostat(temp = temp)
     baro = MTKBarostat(ff, temp = temp, press = pressure, vol_constraint = True)
     tbc = TBCombination(thermo, baro)

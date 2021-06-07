@@ -153,7 +153,7 @@ class ConsistentFragmentsReference(Reference):
         return positions_ref, numbers_ref, rvec_ref, efield_ref, pairs_ref, lr_pairs_ref
         
     
-    def compute_reference(self, energy, all_numbers, masks, max_N):
+    def compute_references(self, energy, all_numbers, masks, max_N):
         num_H = tf.reduce_sum(tf.cast(tf.equal(all_numbers, 1), dtype = self.float_type), [-1])
         num_C = tf.reduce_sum(tf.cast(tf.equal(all_numbers, 6), dtype = self.float_type), [-1])
         num_N = tf.reduce_sum(tf.cast(tf.equal(all_numbers, 7), dtype = self.float_type), [-1])
