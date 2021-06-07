@@ -181,7 +181,7 @@ class SchNet(Model):
        
     def save(self, output_file):
         data = {'cutoff' : self.cutoff, 'n_max' : self.n_max, 'start' : self.start, 'end' : self.end, 'shared_W_interactions' : self.shared_W_interactions, 'cutoff_transition_width' : self.cutoff_transition_width,
-                'num_features' : self.num_features, 'num_layers' : self.num_layers, 'num_filters' : self.num_filters} #, 'reference' : self.reference}
+                'num_features' : self.num_features, 'num_layers' : self.num_layers, 'num_filters' : self.num_filters}
         pickle.dump(data, open(output_file + '.pickle', 'wb'))
         
         

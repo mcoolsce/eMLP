@@ -18,6 +18,10 @@ class Model(tf.Module):
         self.restore_file = restore_file
         self.longrange_compute = longrange_compute
         self.reference = reference
+        if type(self.reference) == str:
+            self.reference = ConstantFragmentsReference(self.reference)
+        elif type(self.reference) == float:
+            self.reference = ConstantReference(self.reference)
         
         if float_type == 32:
             self.float_type = tf.float32
@@ -51,12 +55,7 @@ class Model(tf.Module):
                 print(e)
         else:
             print('Starting from random parameters.')
-            
-        if type(self.reference) == str:
-            self.reference = ConstantFragmentsReference(self.reference)
-        elif type(self.reference) == float:
-            self.reference = ConstantReference(self.reference)
-        
+
         self.reference.initialize(self)
         
     
