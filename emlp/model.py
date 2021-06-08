@@ -295,6 +295,13 @@ class Model(tf.Module):
                 calculated_properties['energy'] = value
             else:
                 calculated_properties[key] = value
+                
+        if 'vtens' in calculated_properties.keys(): # The external field should NOT be included in the stress
+            all_centers = np.concatenate((positions[np.where(numbers != 1)], centers), axis = 0)
+            dipole_vector = np.sum(np.expand_dims(numbers, 1) * positions, axis = 0) - 2 * np.sum(all_centers, axis = 0)
+            ext_vtens = - np.expand_dims(dipole_vector * angstrom, -1) * np.expand_dims(efield, 0) / electronvolt
+            calculated_properties['vtens'] -= ext_vtens
+            calculated_properties['stress'] -= - ext_vtens / np.linalg.det(rvec) * (electronvolt / angstrom**3) / (1e+09 * pascal)
 
         return calculated_properties
         
@@ -340,14 +347,7 @@ class Model(tf.Module):
         
         output = self.compute_static(positions, numbers, centers, efield, rvec, list_of_properties = list_of_properties)
         output['centers'] = centers
-        
-        if 'vtens' in output.keys(): # The external field should NOT be included in the stress
-            all_centers = np.concatenate((positions[np.where(numbers != 1)], centers), axis = 0)
-            dipole_vector = np.sum(np.expand_dims(numbers, 1) * positions, axis = 0) - 2 * np.sum(all_centers, axis = 0)
-            ext_vtens = - np.expand_dims(dipole_vector * angstrom, -1) * np.expand_dims(efield, 0) / electronvolt
-            output['vtens'] -= ext_vtens
-            output['stress'] -= - ext_vtens / tf.linalg.det(rvec) * (electronvolt / angstrom**3) / (1e+09 * pascal)
-        
+
         return output
 
           
