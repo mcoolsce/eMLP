@@ -154,7 +154,7 @@ class Model(tf.Module):
             positions = tf.einsum('ijk,ikl->ijl', fractional, rvec)
         else:
             positions = tf.reshape(all_coords[:, :self.N*3], [self.batches, -1, 3])
-            rvec = tf.eye(3, dtype=self.float_type) * 100.
+            rvec = tf.expand_dims(tf.eye(3, dtype=self.float_type), [0]) * 100.
         if include_efield: 
             efield = all_coords[:, -3:]
         else:
