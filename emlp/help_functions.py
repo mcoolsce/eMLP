@@ -46,7 +46,8 @@ def make_comment(include_forces = False, energy = None, rvec = None, **kwargs):
         comment += ':force:R:3'  
     comment += ' '
     kwargs['energy'] = energy
-    kwargs['Lattice'] = rvec.flatten()
+    if not rvec is None:
+        kwargs['Lattice'] = rvec.flatten()
     for key in kwargs.keys():
         if kwargs[key] is None:
             continue
