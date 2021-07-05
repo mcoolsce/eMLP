@@ -7,6 +7,5 @@ setup(
     author='Maarten Cools-Ceuppens',
     packages=['emlp', 'emlp/ref'],
     include_package_data=True,
-    package_data = {'': ['*.so']}
+    package_data = {'': ['*.so'], 'emlp/ref': ['*.*']}
     )
-
