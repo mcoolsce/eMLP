@@ -5,7 +5,7 @@ setup(
     version='0.0.1',
     description='The electron machine learning potential package',
     author='Maarten Cools-Ceuppens',
-    packages=['emlp'],
+    packages=['emlp', 'emlp/ref'],
     include_package_data=True,
     package_data = {'': ['*.so']}
     )
