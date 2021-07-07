@@ -158,7 +158,7 @@ class Model(tf.Module):
         if include_efield: 
             efield = all_coords[:, -3:]
         else:
-            efield = tf.zeros([3], dtype=self.float_type)
+            efield = tf.zeros([1, 3], dtype=self.float_type)
         
         ''' The shortrange contributions '''
         masks = self.compute_masks(input_numbers, input_pairs)
