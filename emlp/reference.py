@@ -48,8 +48,6 @@ class ConstantFragmentsReference(Reference):
         ref_data = np.genfromtxt(os.path.dirname(__file__) + '/ref/reference_' + label + '.txt')
         self.ab_initio_energies = ref_data[:, 1] / electronvolt
         
-        self.ref_energies = tf.zeros([5], self.float_type)
-        
         
     def initialize(self, model):
         print('Constant fragments references at %s' % self.label)
@@ -62,7 +60,7 @@ class ConstantFragmentsReference(Reference):
                 positions = all_positions[np.where(all_numbers != 99)]
                 numbers = all_numbers[np.where(all_numbers != 99)]
                 centers = filter_cores(centers, positions, numbers)
-                output = model.compute_static(positions, numbers, centers, efield = [0, 0, 0], rvec = 100 * np.eye(3), list_of_properties = ['energy'])
+                output = model.compute_static(positions, numbers, centers, efield = [0, 0, 0], rvec = 100 * np.eye(3), list_of_properties = ['energy', 'skip_references'])
                 tmp.append(output['energy'])
                 
         self.ref_energies = tf.convert_to_tensor(tmp, dtype=self.float_type) - self.ab_initio_energies
