@@ -346,7 +346,7 @@ class TFRWriter(object):
             num_centers = num_C + num_N + num_O + kwargs['centers'].shape[0]
             Q = num_H + 6 * num_C + 7 * num_N + 8 * num_O - 2 * num_centers # The total charge of the system
             ref_energy = num_C * self.ref_energies[2] + num_N * self.ref_energies[3] + num_O * self.ref_energies[4] + \
-                         (num_H - 4 * num_C - 3 * num_N - 2 * num_O) / 2. * self.ref_energies[1] + Q * self.ref_energies[0]
+                         (num_H - 4 * num_C - 3 * num_N - 2 * num_O - Q) / 2. * self.ref_energies[1] + Q * self.ref_energies[0]
         else:
             ref_energy = self.reference
         kwargs['energy'] -= float(ref_energy)
