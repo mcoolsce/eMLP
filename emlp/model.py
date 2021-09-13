@@ -61,6 +61,14 @@ class Model(tf.Module):
     
     @tf.function(autograph = False, experimental_relax_shapes = True)
     def compute_properties(self, inputs, list_of_properties):
+        return self._compute_properties(inputs, list_of_properties)
+        
+    @tf.function(autograph = False, experimental_relax_shapes = True, experimental_compile = True)
+    def xla_compute_properties(self, inputs, list_of_properties):
+        return self._compute_properties(inputs, list_of_properties)
+        
+    
+    def _compute_properties(self, inputs, list_of_properties):
         input_rvec = inputs['rvec']
         input_positions_tmp = inputs['all_positions']
         input_numbers = inputs['all_numbers']
@@ -279,10 +287,13 @@ class Model(tf.Module):
         return inputs
         
         
-    def compute_static(self, positions, numbers, centers, efield = [0, 0, 0], rvec = 100 * np.eye(3), list_of_properties = ['energy', 'forces']):
+    def compute_static(self, positions, numbers, centers, efield = [0, 0, 0], rvec = 100 * np.eye(3), list_of_properties = ['energy', 'forces'], xla = False):
         ''' Returns the energy and forces'''
         inputs = self.preprocess(positions, numbers, centers, efield, rvec)
-        tf_calculated_properties = self.compute_properties(inputs, list_of_properties)
+        if xla:
+            tf_calculated_properties = self.xla_compute_properties(inputs, list_of_properties)
+        else:
+            tf_calculated_properties = self.compute_properties(inputs, list_of_properties)
         
         calculated_properties = {}
         for key in tf_calculated_properties.keys():
@@ -313,10 +324,10 @@ class Model(tf.Module):
         return tf_hessian.numpy()
         
         
-    def compute(self, positions, numbers, init_centers, rvec = 100 * np.eye(3), efield = [0, 0, 0], max_disp = None, error_on_fail = False, maxiter = 1000, list_of_properties = ['energy', 'forces'], verbose = False):
+    def compute(self, positions, numbers, init_centers, rvec = 100 * np.eye(3), efield = [0, 0, 0], max_disp = None, error_on_fail = False, maxiter = 1000, list_of_properties = ['energy', 'forces'], verbose = False, xla = False):
         history = MinimizeHistory()
         def cost(centers):
-            output = self.compute_static(positions, numbers, centers.reshape([-1, 3]), efield, rvec, list_of_properties = ['energy', 'forces', 'skip_references'])
+            output = self.compute_static(positions, numbers, centers.reshape([-1, 3]), efield, rvec, list_of_properties = ['energy', 'forces', 'skip_references'], xla = xla)
             energy = output['energy']
             gcenter = -output['center_forces']
             history.update(energy, centers.reshape([-1, 3]), np.max(gcenter))
@@ -345,7 +356,7 @@ class Model(tf.Module):
         if verbose:
             print('Number of jacobian evaluations: %d' % jac_evaluations)  
         
-        output = self.compute_static(positions, numbers, centers, efield, rvec, list_of_properties = list_of_properties)
+        output = self.compute_static(positions, numbers, centers, efield, rvec, list_of_properties = list_of_properties, xla = xla)
         output['centers'] = centers
 
         return output
