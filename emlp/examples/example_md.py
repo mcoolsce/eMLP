@@ -7,7 +7,6 @@ from emlp.md import NVE, NVT, NPT
 from emlp.longrange import LongrangeEwald, LongrangeCoulomb
 from emlp.reference import ConstantFragmentsReference
 from emlp.schnet import SchNet
-from nequip import NEQUIP
 from emlp.help_functions import load_xyz, filter_cores
 from yaff import *
 
