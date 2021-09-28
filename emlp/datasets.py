@@ -4,7 +4,9 @@ from molmod.units import angstrom, electronvolt
 from .help_functions import load_xyz, XYZLogger, filter_cores
 import os
 
+
 cell_list_op = tf.load_op_library(os.path.dirname(__file__) + '/cell_list_op.so')
+
 
 def _bytes_feature(value):
     return tf.train.Feature(bytes_list = tf.train.BytesList(value=[value]))  
@@ -84,7 +86,7 @@ class DataSet(object):
         print('Batch size: %d' % batch_size)
         print('List of properties: ' + str(self.list_of_properties))
         if not 'rvec' in self.list_of_properties:
-            print('WARNING: internally rvec will be set 100 * np.eye(3) to calculate pairs')
+            print('WARNING: internally rvec will be set to 100 * np.eye(3) to calculate pairs')
         if not self.augment_data is None:
             self.augment_data.print_info()
         print('')

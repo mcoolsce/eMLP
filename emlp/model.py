@@ -217,7 +217,7 @@ class Model(tf.Module):
         # A tensor [batches, N, J, 2] containing the indices of the neighbors neighbors
         gather_neighbor = tf.concat([batch_indices, tf.expand_dims(pairs[:, :, :, 0], [-1])], axis = 3)
 
-        # Gathering on index -1 raises some errors on CPU when checking bounds
+        # Gathering on index -1 should be avoided on CPU when checking bounds
         gather_neighbor *= tf.expand_dims(neighbor_mask_int, [-1]) 
         
         return gather_center, gather_neighbor

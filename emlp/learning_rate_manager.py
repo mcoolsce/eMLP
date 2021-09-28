@@ -17,6 +17,7 @@ class LearningRateManager(object):
     def stop_training(self):
         return False
         
+        
 class ConstantDecayLearningRate(LearningRateManager):
     def __init__(self, initial_learning_rate = 1e-04, decay_factor = 0.5, min_learning_rate = 1e-07, decay_patience = 25):
         super(ConstantDecayLearningRate).__init__()
@@ -69,6 +70,7 @@ class TriangularLearningRate(LearningRateManager):
             self.learning_rate = self.min_lr + (self.max_lr - self.min_lr) * self.epoch_progress / self.half_width_in_epochs
             
         return self.learning_rate
+        
         
 class ExponentialDecayLearningRate(LearningRateManager):
     def __init__(self, initial_learning_rate = 1e-04, decay_rate = 0.5, decay_epochs = 30):

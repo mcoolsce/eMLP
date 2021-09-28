@@ -4,6 +4,7 @@ from molmod.periodic import periodic
 import time
 import shlex
 
+
 def weight_variable(shape, name, trainable = True, stddev = None):
     if stddev is None:
         initial = tf.random.truncated_normal(shape, stddev = 4. / np.sqrt(shape[-1]))
