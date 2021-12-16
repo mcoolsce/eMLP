@@ -11,9 +11,8 @@ cell_list_op = tf.load_op_library(os.path.dirname(__file__) + '/cell_list_op.so'
 
  
 class Model(tf.Module):
-    def __init__(self, cutoff, restore_file = None, float_type = 32, longrange_compute = None, reference = 0.0):
+    def __init__(self, cutoff, restore_file = None, float_type = 32, longrange_compute = None, reference = 0.0, xla = False):
         super(Model, self).__init__()
-         
         self.cutoff = cutoff
         self.restore_file = restore_file
         self.longrange_compute = longrange_compute
@@ -29,16 +28,25 @@ class Model(tf.Module):
             self.float_type = tf.float64
         else:
             raise RuntimeError('Float type %d not implemented.' % float_type)
+            
+        if xla:
+            print('Enabling XLA')
+            self.compute_properties = self.xla_compute_properties
+        else:
+            self.compute_properties = self.default_compute_properties
                   
             
     @classmethod
-    def from_restore_file(cls, restore_file, float_type = 32, reference = 0.0, longrange_compute = None):
-        data = pickle.load(open(restore_file + '.pickle', 'rb'))
-        data['restore_file'] = restore_file
-        data['float_type'] = float_type
-        data['reference'] = reference
-        data['longrange_compute'] = longrange_compute
-        my_model = cls(**data)
+    def from_restore_file(cls, restore_file, **kwargs):
+        ''' kwargs may include:
+                float_type (32 or 64)
+                reference (default is 0.0)
+                longrange_compute (default is None)
+                xla (default is False)
+        '''
+        kwargs.update(pickle.load(open(restore_file + '.pickle', 'rb')))
+        kwargs['restore_file'] = restore_file
+        my_model = cls(**kwargs)
         my_model.load_checkpoint()
         return my_model
             
@@ -60,7 +68,7 @@ class Model(tf.Module):
         
     
     @tf.function(autograph = False, experimental_relax_shapes = True)
-    def compute_properties(self, inputs, list_of_properties):
+    def default_compute_properties(self, inputs, list_of_properties):
         return self._compute_properties(inputs, list_of_properties)
         
         
@@ -288,13 +296,10 @@ class Model(tf.Module):
         return inputs
         
         
-    def compute_static(self, positions, numbers, centers, efield = [0, 0, 0], rvec = 100 * np.eye(3), list_of_properties = ['energy', 'forces'], xla = False):
+    def compute_static(self, positions, numbers, centers, efield = [0, 0, 0], rvec = 100 * np.eye(3), list_of_properties = ['energy', 'forces']):
         ''' Returns the energy and forces'''
         inputs = self.preprocess(positions, numbers, centers, efield, rvec)
-        if xla:
-            tf_calculated_properties = self.xla_compute_properties(inputs, list_of_properties)
-        else:
-            tf_calculated_properties = self.compute_properties(inputs, list_of_properties)
+        tf_calculated_properties = self.compute_properties(inputs, list_of_properties)
         
         calculated_properties = {}
         for key in tf_calculated_properties.keys():
@@ -326,10 +331,10 @@ class Model(tf.Module):
         return tf_hessian.numpy()
         
         
-    def compute(self, positions, numbers, init_centers, rvec = 100 * np.eye(3), efield = [0, 0, 0], max_disp = None, error_on_fail = False, maxiter = 1000, list_of_properties = ['energy', 'forces'], verbose = False, xla = False):
+    def compute(self, positions, numbers, init_centers, rvec = 100 * np.eye(3), efield = [0, 0, 0], max_disp = None, error_on_fail = False, maxiter = 1000, list_of_properties = ['energy', 'forces'], verbose = False):
         history = MinimizeHistory()
         def cost(centers):
-            output = self.compute_static(positions, numbers, centers.reshape([-1, 3]), efield, rvec, list_of_properties = ['energy', 'forces', 'skip_references'], xla = xla)
+            output = self.compute_static(positions, numbers, centers.reshape([-1, 3]), efield, rvec, list_of_properties = ['energy', 'forces', 'skip_references'])
             energy = output['energy']
             gcenter = -output['center_forces']
             history.update(energy, centers.reshape([-1, 3]), np.max(gcenter))
@@ -358,7 +363,7 @@ class Model(tf.Module):
         if verbose:
             print('Number of jacobian evaluations: %d' % jac_evaluations)  
         
-        output = self.compute_static(positions, numbers, centers, efield, rvec, list_of_properties = list_of_properties, xla = xla)
+        output = self.compute_static(positions, numbers, centers, efield, rvec, list_of_properties = list_of_properties)
         output['centers'] = centers
 
         return output

@@ -129,7 +129,7 @@ class OutputLayer(tf.Module):
             
             if self.float_type == tf.float64:
                 w = tf.cast(w, dtype = tf.float64)
-                b = tf.cast(b, dtype = tf.float64)           
+                b = tf.cast(b, dtype = tf.float64)
             
             atom_features = tf.tensordot(atom_features, w, [[2], [0]]) + b
             if i < len(self.layer_sizes) - 1: # No activation function for the final layer
@@ -139,9 +139,9 @@ class OutputLayer(tf.Module):
 
 
 class SchNet(Model):
-    def __init__(self, cutoff = 5., n_max = 25, num_features = 64, start = 0.0, num_layers = 3, end = None, num_filters = -1, longrange_compute = None, cutoff_transition_width = None,
-                 restore_file = None, float_type = 32, shared_W_interactions = True, reference = 0.0):
-        Model.__init__(self, cutoff, restore_file = restore_file, float_type = float_type, longrange_compute = longrange_compute, reference = reference) 
+    def __init__(self, cutoff = 5., n_max = 25, num_features = 64, start = 0.0, num_layers = 3, end = None, num_filters = -1, cutoff_transition_width = None,
+                 shared_W_interactions = True, **kwargs):
+        Model.__init__(self, cutoff, **kwargs) 
         if end is None:
             self.end = cutoff
         else:

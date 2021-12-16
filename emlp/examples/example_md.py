@@ -27,7 +27,7 @@ def load_data(filename, filter_centers=False, verbose = False):
   
     
 if __name__ == '__main__':
-    model = SchNet.from_restore_file('model_name', longrange_compute = LongrangeCoulomb(), reference = ConstantFragmentsReference(float_type = tf.float64), float_type = 64)
+    model = SchNet.from_restore_file('model_name', longrange_compute = LongrangeCoulomb(), reference = ConstantFragmentsReference(float_type = tf.float64), float_type = 64, xla = False)
     filename = 'initial_config_with_centers.xyz'
     positions, numbers, centers, rvec = load_data(filename, filter_centers = True)
 
@@ -37,5 +37,5 @@ if __name__ == '__main__':
         system = System(numbers, positions * angstrom, rvecs = (rvec * angstrom).astype(np.float))
     
     NVT(system, model, 10000, centers = centers, screenprint = 10, nprint = 1, dt = 0.5, temp = 300,
-        name = 'output_name', efield = [0.0, 0.0, 0.0], print_opt_steps = False, xla = False)
+        name = 'output_name', efield = [0.0, 0.0, 0.0], print_opt_steps = False)
     
