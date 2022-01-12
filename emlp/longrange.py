@@ -114,7 +114,8 @@ def generate_kvecs(gvecs, rvecs, gcut, float_type = tf.float32):
     
 def reciprocal_part(alpha, gcut, charges, positions, rvecs, elements_mask, float_type = tf.float32): 
     gvecs = tf.linalg.inv(rvecs) #  Reciprocal cell matrix
-    volume = tf.linalg.det(rvecs) * angstrom**3
+    #volume = tf.linalg.det(rvecs) * angstrom**3
+    volume = tf.reduce_sum(rvecs[:, :, 0] * tf.linalg.cross(rvecs[:, :, 1], rvecs[:, :, 2]), [1]) * angstrom**3
     
     k_vecs, k2, k_mask = generate_kvecs(gvecs, rvecs, gcut, float_type = float_type) # [batches, K, 3]
 
