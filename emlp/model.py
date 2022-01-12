@@ -82,7 +82,10 @@ class Model(tf.Module):
         input_positions_tmp = inputs['all_positions']
         input_numbers = inputs['all_numbers']
         input_pairs = inputs['pairs']
-        input_lr_pairs = inputs['longrange_pairs']
+        if self.longrange_compute is None:
+            input_lr_pairs = input_pairs
+        else:
+            input_lr_pairs = inputs['longrange_pairs']
         input_efield = inputs['efield'] 
         
         gvecs = tf.linalg.inv(input_rvec)
