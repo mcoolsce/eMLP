@@ -6,8 +6,8 @@ import numpy as np
 
 
 class LongrangeModel(Model):
-    def __init__(self, longrange_compute, float_type = 32):
-        Model.__init__(self, cutoff = longrange_compute.cutoff, float_type = float_type, longrange_compute = longrange_compute)
+    def __init__(self, longrange_compute, float_type = 32, xla = False):
+        Model.__init__(self, cutoff = longrange_compute.cutoff, float_type = float_type, longrange_compute = longrange_compute, xla = xla)
         self.reference = ConstantReference(0.)
         
     
