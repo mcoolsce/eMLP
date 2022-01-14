@@ -79,27 +79,29 @@ class Model(tf.Module):
     
     def _compute_properties(self, inputs, list_of_properties):
         input_rvec = inputs['rvec']
-        input_positions_tmp = inputs['all_positions']
+        input_positions = inputs['all_positions']
         input_numbers = inputs['all_numbers']
         input_pairs = inputs['pairs']
+        input_efield = inputs['efield']
+        
+        self.batches = tf.shape(input_pairs)[0]
+        self.N = tf.shape(input_pairs)[1]
+        
         if self.longrange_compute is None:
             input_lr_pairs = input_pairs
         else:
             input_lr_pairs = inputs['longrange_pairs']
-        input_efield = inputs['efield'] 
-        
-        gvecs = tf.linalg.inv(input_rvec)
-        fractional = tf.einsum('ijk,ikl->ijl', input_positions_tmp, gvecs)
+
+        strain = tf.zeros([self.batches, 3, 3], dtype = self.float_type)
         
         with tf.GradientTape(persistent = True) as force_tape:
-            force_tape.watch(input_rvec)
-            input_positions = tf.einsum('ijk,ikl->ijl', fractional, input_rvec)
+            force_tape.watch(strain)
             force_tape.watch(input_positions)
+
+            input_positions += tf.linalg.matmul(input_positions, strain)
+            input_rvec += tf.linalg.matmul(input_rvec, strain)
             
             positions, numbers, rvec, efield, pairs, lr_pairs = self.reference.pad_inputs(input_positions, input_numbers, input_rvec, input_efield, input_pairs, input_lr_pairs)
-            
-            self.batches = tf.shape(pairs)[0]
-            self.N = tf.shape(pairs)[1]
             
             ''' The shortrange contributions '''
             masks = self.compute_masks(numbers, pairs)
@@ -130,10 +132,10 @@ class Model(tf.Module):
             calculated_properties['all_forces'] = -model_gradient # These are not masked yet!
         
         if 'vtens' in list_of_properties or 'stress' in list_of_properties:
-            de_dc = force_tape.gradient(energy, input_rvec)
-            vtens = tf.einsum('ijk,ijl->ikl', input_rvec, de_dc)
+            vtens = force_tape.gradient(energy, strain) # eV
+            #de_dc = force_tape.gradient(energy, input_rvec)
+            #vtens = tf.einsum('ijk,ijl->ikl', input_rvec, de_dc)
             calculated_properties['vtens'] = vtens # eV
-            #calculated_properties['stress'] = - vtens / tf.reshape(tf.linalg.det(input_rvec), [-1, 1, 1]) * (electronvolt / angstrom**3) / (1e+09 * pascal) # GPa
             # TODO CORRECT FOR THE EXTERNAL FIELD
             
         if 'masks' in list_of_properties:
