@@ -83,16 +83,13 @@ class Model(tf.Module):
         input_numbers = inputs['all_numbers']
         input_pairs = inputs['pairs']
         input_efield = inputs['efield']
-        
-        self.batches = tf.shape(input_pairs)[0]
-        self.N = tf.shape(input_pairs)[1]
-        
+
         if self.longrange_compute is None:
             input_lr_pairs = input_pairs
         else:
             input_lr_pairs = inputs['longrange_pairs']
 
-        strain = tf.zeros([self.batches, 3, 3], dtype = self.float_type)
+        strain = tf.zeros([tf.shape(input_pairs)[0], 3, 3], dtype = self.float_type)
         
         with tf.GradientTape(persistent = True) as force_tape:
             force_tape.watch(strain)
@@ -102,6 +99,8 @@ class Model(tf.Module):
             input_rvec += tf.linalg.matmul(input_rvec, strain)
             
             positions, numbers, rvec, efield, pairs, lr_pairs = self.reference.pad_inputs(input_positions, input_numbers, input_rvec, input_efield, input_pairs, input_lr_pairs)
+            self.batches = tf.shape(pairs)[0]
+            self.N = tf.shape(pairs)[1]
             
             ''' The shortrange contributions '''
             masks = self.compute_masks(numbers, pairs)
