@@ -207,6 +207,7 @@ class Model(tf.Module):
     
     def get_charges(self, all_numbers, float_type = tf.float32):
         screened_numbers = tf.where(tf.not_equal(all_numbers, 1), all_numbers - 2, all_numbers)
+        screened_numbers = tf.where(tf.math.greater(all_numbers, 10), all_numbers - 10, screened_numbers)
         charges = tf.where(tf.equal(all_numbers, 99), -2 * tf.ones([self.batches, self.N], dtype = tf.int32), screened_numbers)
         return tf.cast(charges, dtype = float_type)
 
