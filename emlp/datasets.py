@@ -301,7 +301,7 @@ def convert_np_value(value, float_converter):
  
 class TFRWriter(object):
     def __init__(self, filename, list_of_properties = ['positions', 'numbers', 'centers', 'energy', 'rvec', 'forces', 'efield'], float_type = 32,
-                 verbose=True, reference = 0., filter_centers = False, preprocess_model = None):
+                 verbose=True, reference = 0., filter_centers = False, preprocess_model = None, per_atom_reference = 0.):
         ''' Possible properties:
             positions ('pos' in xyz)
             numbers ('Z' in xyz)
@@ -324,6 +324,7 @@ class TFRWriter(object):
         self.verbose = verbose
         self.stats = []
         self.reference = reference
+        self.per_atom_reference = per_atom_reference
         self.filter_centers = filter_centers
         self.preprocess_model = preprocess_model
         
@@ -352,6 +353,7 @@ class TFRWriter(object):
         else:
             ref_energy = self.reference
         kwargs['energy'] -= float(ref_energy)
+        kwargs['energy'] -= float(self.per_atom_reference * len(kwargs['numbers']))
         
         if not self.preprocess_model is None: # TODO make the input and computed properties more general
             preprocessed_output = self.preprocess_model.compute_static(kwargs['positions'], kwargs['numbers'], kwargs['centers'], 

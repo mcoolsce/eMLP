@@ -26,17 +26,24 @@ class Reference(object):
 
 
 class ConstantReference(Reference):
-    def __init__(self, value = 0.):
+    def __init__(self, value = 0., per_atom = False):
         Reference.__init__(self) 
         self.value = value
+        self.per_atom = per_atom
         
         
     def initialize(self, model):
-        print('Using a constant reference of %f' % self.value)
+        if self.per_atom:
+            print('Using a constant per atom reference of %f' % self.value)
+        else:
+            print('Using a constant reference of %f' % self.value)
         
         
     def compute_references(self, energy, all_numbers, masks, max_N):
-        return energy + self.value
+        if self.per_atom:
+            return energy + tf.reduce_sum(masks['position_number_mask'], [-1]) * self.value
+        else:
+            return energy + self.value
         
         
 class ConstantFragmentsReference(Reference):
