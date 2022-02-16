@@ -147,8 +147,8 @@ class CellListOp : public OpKernel {
 			
 			unwrapped = fmod(sum, 1.0);
             
-            // Underflow will result in an atfrac of 1 if the fractional coordinate before wrapping is -epsilon (epsilon very small)
-            atfracs[i][j] = (unwrapped < 0 ? unwrapped + 1.0 : unwrapped); // wrap this inside the cell (original atfracs[i][j] = sum;)
+            // Underflow will result in an atfrac of 1 if the fractional coordinate before wrapping is very small
+            atfracs[i][j] = (unwrapped < 0 ? unwrapped + 1.0 : unwrapped); // wrap this inside the cell
             wrapped_addfrac[i][j] = static_cast<int>(floor(sum));
 		}
 	}
@@ -157,7 +157,6 @@ class CellListOp : public OpKernel {
 	for (int i = 0; i < N; i++){
 		atbins[i] = new int[3];
 		for (int j = 0; j < 3; j++){
-			// atbins[i][j] = static_cast<int>(floor(atfracs[i][j] * nbins[j])); Original code
 			int bin_number = static_cast<int>(floor(atfracs[i][j] * nbins[j]));
 			atbins[i][j] = (bin_number == nbins[j] ? nbins[j] - 1 : bin_number);
 			
@@ -181,7 +180,7 @@ class CellListOp : public OpKernel {
 	std::list<std::array<int, 5>> list_output;
 	// Making the max neighbor list
 	int* num_neighbors = new int[N];
-	memset(num_neighbors, 0, N * sizeof(int)); // initializes to zero
+	memset(num_neighbors, 0, N * sizeof(int)); // initializing to zero
 	
 	int max_neighbors = 0;
 	
@@ -222,7 +221,6 @@ class CellListOp : public OpKernel {
 						for (int mirrorz = 0; mirrorz < nmirrors[2]; mirrorz++){
 							if ((category == 0) || ((category == 1) && (mirrorx == 0)) || ((category == 2) && (mirrorx == 0) && (mirrory == 0)) || 
 							   ((category == 3) && (mirrorx == 0) && (mirrory == 0) && (mirrorz == 0) && (iatom_a > iatom_b))){ // Only count the pairs once
-						       // (OPTIONAL, CHECK PERFORMANCE): Filter out the neighbors who are situated outside the cutoff radius
 						       int rel_vector_cell[3] = {addfrac[0] + wrapped_addfrac[iatom_a][0] - wrapped_addfrac[iatom_b][0] + mirrorx,
 												   	     addfrac[1] + wrapped_addfrac[iatom_a][1] - wrapped_addfrac[iatom_b][1] + mirrory, 
 												   	     addfrac[2] + wrapped_addfrac[iatom_a][2] - wrapped_addfrac[iatom_b][2] + mirrorz};
@@ -271,7 +269,7 @@ class CellListOp : public OpKernel {
     
     // Copying the c++ list into the output of the right size
     int* indexes = new int[N];
-	memset(indexes, 0, N * sizeof(int)); // initializes to zero
+	memset(indexes, 0, N * sizeof(int)); // initializing to zero
 	
     int my_index;
 	for (auto const& pair : list_output){
@@ -304,12 +302,10 @@ class CellListOp : public OpKernel {
 	        output(i, j, 1) = -1;
 	        output(i, j, 2) = -1;
 	        output(i, j, 3) = -1;
-	        // It is not necessary to put the other entries of dim 3 to -1 as they have to be masked away!
 	    }
 	}
 	
 	// Deleting the allocated memory
-	
 	delete[] cellinfo.spacings;
 	delete[] num_neighbors;
 	delete[] indexes;

@@ -132,9 +132,9 @@ class Model(tf.Module):
         
         if 'vtens' in list_of_properties or 'stress' in list_of_properties:
             vtens = force_tape.gradient(energy, strain) # eV
-            #de_dc = force_tape.gradient(energy, input_rvec)
-            #vtens = tf.einsum('ijk,ijl->ikl', input_rvec, de_dc)
             calculated_properties['vtens'] = vtens # eV
+            volume = tf.reduce_sum(input_rvec[:, :, 0] * tf.linalg.cross(input_rvec[:, :, 1], input_rvec[:, :, 2]), [1])
+            calculated_properties['stress'] = vtens / tf.reshape(volume, [-1, 1, 1]) * (electronvolt / angstrom**3) / (1e+09 * pascal) # GPa
             # TODO CORRECT FOR THE EXTERNAL FIELD
             
         if 'masks' in list_of_properties:
@@ -318,13 +318,12 @@ class Model(tf.Module):
             else:
                 calculated_properties[key] = value
                 
-        if 'vtens' in calculated_properties.keys(): # The external field should NOT be included in the stress
+        if 'vtens' in calculated_properties.keys() or 'stress' in calculated_properties.keys(): # The external field should NOT be included in the stress
             all_centers = np.concatenate((positions[np.where(numbers != 1)], centers), axis = 0)
             dipole_vector = np.sum(np.expand_dims(numbers, 1) * positions, axis = 0) - 2 * np.sum(all_centers, axis = 0)
             ext_vtens = - np.expand_dims(dipole_vector * angstrom, -1) * np.expand_dims(efield, 0) / electronvolt
             calculated_properties['vtens'] -= ext_vtens
-            calculated_properties['stress'] = - calculated_properties['vtens'] / np.linalg.det(rvec) * (electronvolt / angstrom**3) / (1e+09 * pascal) # GPa
-            #calculated_properties['stress'] -= - ext_vtens / np.linalg.det(rvec) * (electronvolt / angstrom**3) / (1e+09 * pascal)
+            calculated_properties['stress'] = calculated_properties['vtens'] / np.linalg.det(rvec) * (electronvolt / angstrom**3) / (1e+09 * pascal) # GPa
 
         return calculated_properties
         
