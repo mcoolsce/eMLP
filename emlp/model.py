@@ -116,7 +116,7 @@ class Model(tf.Module):
                 lr_masks = self.compute_masks(numbers, lr_pairs)
                 lr_gather_center, lr_gather_neighbor = self.make_gather_list(lr_pairs, lr_masks['neighbor_mask_int'])
                 lr_dcarts, lr_dists = self.compute_distances(positions, numbers, rvec, lr_pairs, lr_masks['neighbor_mask_int'], lr_gather_center, lr_gather_neighbor)
-                neighbor_charges = self.get_neighbor_charges(numbers, lr_gather_neighbor, lr_masks['neighbor_mask_int'], float_type = self.float_type)
+                neighbor_charges = self.get_neighbor_charges(charges, lr_gather_neighbor, lr_masks['neighbor_mask'])
                 energy += self.longrange_compute(charges, neighbor_charges, positions, lr_dists, rvec, lr_masks['elements_mask'], lr_masks['neighbor_mask'], float_type = self.float_type) / electronvolt
             
             energy += - tf.reduce_sum(positions * tf.expand_dims(tf.cast(charges, dtype = self.float_type), [-1]) * tf.expand_dims(efield, [1]), [1, 2]) * angstrom / electronvolt
@@ -189,13 +189,13 @@ class Model(tf.Module):
                                                                 
         energy, atomic_properties = self.internal_compute(dcarts, dists, input_numbers, masks, gather_neighbor)
         charges = self.get_charges(input_numbers, float_type = self.float_type)
-        
+
         if not self.longrange_compute is None:
             ''' The longrange contributions '''
             lr_masks = self.compute_masks(input_numbers, input_lr_pairs)
             lr_gather_center, lr_gather_neighbor = self.make_gather_list(input_lr_pairs, lr_masks['neighbor_mask_int'])
             lr_dcarts, lr_dists = self.compute_distances(positions, input_numbers, rvec, input_lr_pairs, lr_masks['neighbor_mask_int'], lr_gather_center, lr_gather_neighbor)
-            neighbor_charges = self.get_neighbor_charges(input_numbers, lr_gather_neighbor, lr_masks['neighbor_mask_int'], float_type = self.float_type)
+            neighbor_charges = self.get_neighbor_charges(charges, lr_gather_neighbor, lr_masks['neighbor_mask'])
             energy += self.longrange_compute(charges, neighbor_charges, positions, lr_dists, rvec, lr_masks['elements_mask'], lr_masks['neighbor_mask'], float_type = self.float_type) / electronvolt
         
         energy += - tf.reduce_sum(positions * tf.expand_dims(tf.cast(charges, dtype = self.float_type), [-1]) * tf.expand_dims(efield, [1]), [1, 2]) * angstrom / electronvolt
@@ -212,12 +212,9 @@ class Model(tf.Module):
         return tf.cast(charges, dtype = float_type)
 
 
-    def get_neighbor_charges(self, all_numbers, gather_neighbor, neighbor_mask_int, float_type = tf.float32):
-        J = tf.shape(neighbor_mask_int)[2]
-        neighbor_numbers = tf.gather_nd(all_numbers, gather_neighbor) * neighbor_mask_int # [batches, N, J]
-        screened_neighbors = tf.where(tf.not_equal(neighbor_numbers, 1), neighbor_numbers - 2, neighbor_numbers)
-        neighbor_charges = tf.where(tf.equal(neighbor_numbers, 99), -2 * tf.ones([self.batches, self.N, J], dtype = tf.int32), screened_neighbors)
-        return tf.cast(neighbor_charges, dtype = float_type)
+    def get_neighbor_charges(self, charges, gather_neighbor, neighbor_mask):
+        neighbor_charges = tf.gather_nd(charges, gather_neighbor) * neighbor_mask # [batches, N, J]
+        return neighbor_charges
         
     
     def make_gather_list(self, pairs, neighbor_mask_int):

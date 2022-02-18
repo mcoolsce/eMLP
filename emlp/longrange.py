@@ -53,7 +53,7 @@ class LongrangeEwald(object):
     def __call__(self, charges, neighbor_charges, all_positions, dists, rvecs, elements_mask, neighbor_mask, float_type = tf.float32):
         # Imposing a smooth cutoff
         smooth_cutoff_mask = f_cutoff(dists, cutoff = self.cutoff, cutoff_transition_width = 0.5, float_type = float_type) * neighbor_mask
-    
+
         ''' The Ewald summation '''
         real_space_energy = real_space_part(self.alpha, charges, neighbor_charges, dists, elements_mask, smooth_cutoff_mask, self.sigma, float_type = float_type)
         self_correction = self_correction_part(self.alpha, charges, elements_mask)
@@ -63,7 +63,7 @@ class LongrangeEwald(object):
         gamma = 1. / (2 * self.sigma)
         A = gamma / np.sqrt(np.pi)
         self_energy = A * tf.reduce_sum(charges**2 * elements_mask, [1]) / angstrom
-        
+
         return real_space_energy - self_correction + reciprocal_energy + self_energy
         
         
