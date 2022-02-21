@@ -42,20 +42,27 @@ class LongrangeCoulomb(object):
 
 
 class LongrangeEwald(object):
-    def __init__(self, cutoff = 12., alpha_scale = 3.2, gscale = 1.5, sigma = 1.2727922061357857):
-        self.cutoff = cutoff
-        self.alpha = alpha_scale / self.cutoff
-        self.gcut = gscale * self.alpha
+    def __init__(self, cutoff = 12., alpha = 4./15, gcut = 0.4, sigma = 1.2727922061357857, real_space_cancellation = False):
         self.sigma = sigma
-        print('Ewald summation with rcut: %f, alpha_scale: %f, gscale: %f, sigma: %f' % (self.cutoff, alpha_scale, gscale, sigma))
+        self.real_space_cancellation = real_space_cancellation
+        if real_space_cancellation:
+            self.cutoff = 2.0
+            self.alpha = 1. / (2 * self.sigma) / angstrom
+            print('Setting the Ewald widths to cancel out the real space contribution.')
+        else:
+            self.cutoff = cutoff
+            self.alpha = alpha
+        self.gcut = gcut
+        print('Ewald summation with rcut: %f, sigma: %f, alpha: %f, gcut: %f' % (self.cutoff, sigma, self.alpha, self.gcut))
         
 
     def __call__(self, charges, neighbor_charges, all_positions, dists, rvecs, elements_mask, neighbor_mask, float_type = tf.float32):
-        # Imposing a smooth cutoff
-        smooth_cutoff_mask = f_cutoff(dists, cutoff = self.cutoff, cutoff_transition_width = 0.5, float_type = float_type) * neighbor_mask
-
         ''' The Ewald summation '''
-        real_space_energy = real_space_part(self.alpha, charges, neighbor_charges, dists, elements_mask, smooth_cutoff_mask, self.sigma, float_type = float_type)
+        if not self.real_space_cancellation:
+            smooth_cutoff_mask = f_cutoff(dists, cutoff = self.cutoff, cutoff_transition_width = 0.5, float_type = float_type) * neighbor_mask
+            real_space_energy = real_space_part(self.alpha, charges, neighbor_charges, dists, elements_mask, smooth_cutoff_mask, self.sigma, float_type = float_type)
+        else:
+            real_space_energy = 0.
         self_correction = self_correction_part(self.alpha, charges, elements_mask)
         reciprocal_energy = reciprocal_part(self.alpha, self.gcut, charges, all_positions, rvecs, elements_mask, float_type = float_type)
 
