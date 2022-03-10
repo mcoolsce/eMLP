@@ -116,16 +116,16 @@ class AllElectronPart(ForcePart):
         return output['energy'] * electronvolt
         
     
-def Optimize(model, positions, numbers, centers, rvec = np.eye(3) * 100, log = None, fullcell = False): 
+def Optimize(model, positions, numbers, centers, rvec = np.eye(3) * 100, log = None, fullcell = False, method = QNOptimizer): 
     all_numbers = np.concatenate((numbers, 99 * np.ones(centers.shape[0], dtype=np.int)), axis = 0)
     all_positions = np.concatenate((positions, centers), axis = 0)
     system = System(all_numbers, all_positions * angstrom, rvecs = rvec.astype(np.float) * angstrom)
     
     ff = ForceField(system, [AllElectronPart(system, model, efield = [0, 0, 0], log_name = log, nprint = 1)])
     if fullcell:
-        opt = QNOptimizer(FullCellDOF(ff, gpos_rms = 1e-07, grvecs_rms=1e-07))
+        opt = method(FullCellDOF(ff, gpos_rms = 1e-07, grvecs_rms=1e-07))
     else:
-        opt = QNOptimizer(CartesianDOF(ff, gpos_rms = 1e-07))
+        opt = method(CartesianDOF(ff, gpos_rms = 1e-07))
     try:
         opt.run()
     except RuntimeError as error:
