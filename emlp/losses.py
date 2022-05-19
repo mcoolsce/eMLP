@@ -72,3 +72,13 @@ class MAE(AbstractError):
     
     def _call(self, my_prediction, my_target):
         return tf.reduce_sum(tf.abs(my_prediction - my_target))
+        
+        
+class RelMSE(AbstractError):
+    def __init__(self, my_key, scale_factor = 1., per_atom = False, switch = 0.1):
+        super(RelMSE, self).__init__(my_key, scale_factor, per_atom)
+        self._title = 'RelMSE'
+        self.switch = switch
+    
+    def _call(self, my_prediction, my_target):
+        return tf.reduce_sum((my_prediction - my_target)**2 / tf.math.maximum(tf.abs(my_target), self.switch)**2)
