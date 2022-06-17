@@ -7,7 +7,7 @@ from .help_functions import XYZLogger
 
 class ModelPart(ForcePart):
     def __init__(self, system, model, centers, efield = [0, 0, 0], log_name = 'md.xyz', nprint = 1, print_opt_steps = False):
-        ForcePart.__init__(self, 'ml_ff', system)
+        ForcePart.__init__(self, 'eMLP', system)
         self.system = system
         self.model = model
         self.step = 0
@@ -74,7 +74,7 @@ class ModelPart(ForcePart):
         
 class AllElectronPart(ForcePart):
     def __init__(self, system, model, efield = [0, 0, 0], log_name = 'centers.xyz', nprint = 1):
-        ForcePart.__init__(self, 'ml_ff', system)
+        ForcePart.__init__(self, 'eMLP', system)
         self.system = system
         self.model = model
         self.efield = efield
