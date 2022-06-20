@@ -92,7 +92,7 @@ class Trainer(object):
             return per_gpu_losses
             
         
-        @tf.function(autograph = False, experimental_relax_shapes = True)
+        @tf.function(autograph = False, reduce_retracing = True)
         def distributed_validation(data):
             per_gpu_losses = self.strategy.run(single_validation_step, kwargs=data)
             
@@ -106,7 +106,7 @@ class Trainer(object):
             return batch_losses
             
             
-        @tf.function(autograph = False, experimental_relax_shapes = True)
+        @tf.function(autograph = False, reduce_retracing = True)
         def distributed_training(data):   
             total_loss = self.strategy.run(single_train_step, kwargs=data)    
             return self.strategy.reduce(tf.distribute.ReduceOp.SUM, total_loss, axis=None)

@@ -67,12 +67,12 @@ class Model(tf.Module):
         self.reference.initialize(self)
         
     
-    @tf.function(autograph = False, experimental_relax_shapes = True)
+    @tf.function(autograph = False, reduce_retracing = True)
     def default_compute_properties(self, inputs, list_of_properties):
         return self._compute_properties(inputs, list_of_properties)
         
         
-    @tf.function(autograph = False, experimental_relax_shapes = True, jit_compile = True)
+    @tf.function(autograph = False, reduce_retracing = True, jit_compile = True)
     def xla_compute_properties(self, inputs, list_of_properties):
         return self._compute_properties(inputs, list_of_properties)
         
