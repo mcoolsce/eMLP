@@ -25,11 +25,6 @@ class Trainer(object):
         
         assert self.model.cutoff == self.train_data.cutoff
         assert self.model.cutoff == self.validation_data.cutoff
-        if not self.model.longrange_compute is None:
-            assert self.model.longrange_compute.cutoff == self.train_data.longrange_cutoff
-            assert self.model.longrange_compute.cutoff == self.validation_data.longrange_cutoff
-        else:
-            print('No longrange interactions are being computed. Use a small longrange cutoff!')
         
         # PRINTING SOME USEFUL INFORMATION
         self.num_gpus = strategy.num_replicas_in_sync

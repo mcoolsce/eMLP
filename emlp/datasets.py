@@ -20,11 +20,11 @@ def f_cutoff(input_tensor, cutoff, cutoff_transition_width = 0.5, float_type = t
 
 
 class DataSet(object):
-    def __init__(self, tfr_files, num_configs, cutoff = 5., longrange_cutoff = 16.5, batch_size = 16, test = False, num_shuffle = -1, float_type = 32, 
+    def __init__(self, tfr_files, num_configs, cutoff = 5., longrange_compute = None, batch_size = 16, test = False, num_shuffle = -1, float_type = 32, 
                  num_parallel_calls = 8, strategy = None, list_of_properties = ['positions', 'numbers', 'energy', 'rvec', 'forces'],
                  additional_property_definitions = {}, augment_data = None):
         self.cutoff = cutoff
-        self.longrange_cutoff = longrange_cutoff
+        self.longrange_compute = longrange_compute
         self.num_configs = num_configs
         self.list_of_properties = list_of_properties # TODO check if necessary properties are present?
         self.batch_size = batch_size
@@ -48,6 +48,7 @@ class DataSet(object):
                                      'numbers': ([None], -1, tf.int32),
                                      'pairs': ([None, None, 4], -1, tf.int32),
                                      'longrange_pairs': ([None, None, 4], -1, tf.int32),
+                                     'n_grid': ([None, 3], 0, tf.int32),
                                      'rvec': ([3, 3], self.zero, self.float_type),
                                      'vtens' : ([3, 3], self.zero, self.float_type),
                                      'stress' : ([3, 3], self.zero, self.float_type),
@@ -57,9 +58,9 @@ class DataSet(object):
                                      'efield' : ([3], self.zero, self.float_type)}
         self.property_definitions.update(additional_property_definitions)
         
-        padding_shapes = {'pairs': [None, None, 4], 'longrange_pairs': [None, None, 4], 'efield' : [3],
+        padding_shapes = {'pairs': [None, None, 4], 'efield' : [3],
                           'all_positions': [None, 3], 'all_numbers' : [None], 'rvec' : [3, 3]}
-        padding_values = {'pairs': -1, 'longrange_pairs': -1, 'all_positions': self.zero, 
+        padding_values = {'pairs': -1, 'all_positions': self.zero, 
                           'all_numbers' : -1, 'rvec' : self.zero, 'efield': self.zero}
         if 'forces' in self.list_of_properties:
             padding_shapes['all_forces'] = [None, 3]
@@ -70,8 +71,11 @@ class DataSet(object):
             if key in ['positions', 'numbers', 'centers', 'forces', 'center_forces']:
                 continue
             padding_shapes[key] = self.property_definitions[key][0]
-            padding_values[key] = self.property_definitions[key][1]
-        
+            padding_values[key] = self.property_definitions[key][1]       
+        if not self.longrange_compute is None:
+            padding_shapes.update(self.longrange_compute.additional_shapes)
+            padding_values.update(self.longrange_compute.additional_values)
+
         if num_shuffle == -1:
             num_shuffle = self.num_configs
         
@@ -161,13 +165,13 @@ class DataSet(object):
         
         if self.float_type == tf.float64:
             pairs = cell_list_op.cell_list(tf.cast(output_dict['all_positions'], dtype = tf.float32), tf.cast(output_dict['rvec'], dtype = tf.float32), np.float32(self.cutoff))
-            longrange_pairs = cell_list_op.cell_list(tf.cast(output_dict['all_positions'], dtype = tf.float32), tf.cast(output_dict['rvec'], dtype = tf.float32), np.float32(self.longrange_cutoff))
         else:
             pairs = cell_list_op.cell_list(output_dict['all_positions'], output_dict['rvec'], np.float32(self.cutoff))
-            longrange_pairs = cell_list_op.cell_list(output_dict['all_positions'], output_dict['rvec'], np.float32(self.longrange_cutoff))
-        
         output_dict['pairs'] = pairs
-        output_dict['longrange_pairs'] = longrange_pairs
+        
+        if not self.longrange_compute is None:
+            output_dict.update(self.longrange_compute.preprocess(output_dict, float_type = self.float_type))
+        
         return output_dict
         
 

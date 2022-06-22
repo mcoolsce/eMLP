@@ -84,7 +84,7 @@ class Model(tf.Module):
         input_pairs = inputs['pairs']
         input_efield = inputs['efield']
 
-        if self.longrange_compute is None:
+        if not 'longrange_pairs' in inputs.keys():
             input_lr_pairs = input_pairs
         else:
             input_lr_pairs = inputs['longrange_pairs']
@@ -112,12 +112,16 @@ class Model(tf.Module):
             charges = self.get_charges(numbers, float_type = self.float_type)
             
             if not self.longrange_compute is None:
-                ''' The longrange contributions '''
-                lr_masks = self.compute_masks(numbers, lr_pairs)
-                lr_gather_center, lr_gather_neighbor = self.make_gather_list(lr_pairs, lr_masks['neighbor_mask_int'])
-                lr_dcarts, lr_dists = self.compute_distances(positions, numbers, rvec, lr_pairs, lr_masks['neighbor_mask_int'], lr_gather_center, lr_gather_neighbor)
-                neighbor_charges = self.get_neighbor_charges(charges, lr_gather_neighbor, lr_masks['neighbor_mask'])
-                energy += self.longrange_compute(charges, neighbor_charges, positions, lr_dists, rvec, lr_masks['elements_mask'], lr_masks['neighbor_mask'], float_type = self.float_type) / electronvolt
+                lr_inputs = {'charges' : charges, 'positions' : positions, 'elements_mask' : masks['elements_mask'], 'rvec' : rvec}
+                if 'longrange_pairs' in inputs.keys():
+                    lr_masks = self.compute_masks(numbers, lr_pairs)
+                    lr_gather_center, lr_gather_neighbor = self.make_gather_list(lr_pairs, lr_masks['neighbor_mask_int'])
+                    lr_dcarts, lr_dists = self.compute_distances(positions, numbers, rvec, lr_pairs, lr_masks['neighbor_mask_int'], lr_gather_center, lr_gather_neighbor)
+                    neighbor_charges = self.get_neighbor_charges(charges, lr_gather_neighbor, lr_masks['neighbor_mask'])
+                    lr_inputs.update({'neighbor_charges' : neighbor_charges, 'lr_dists' : lr_dists, 'neighbor_mask' : lr_masks['neighbor_mask']})
+                if 'n_grid' in inputs.keys():
+                    lr_inputs['n_grid'] = inputs['n_grid']
+                energy += self.longrange_compute(lr_inputs, float_type = self.float_type) / electronvolt
             
             energy += - tf.reduce_sum(positions * tf.expand_dims(tf.cast(charges, dtype = self.float_type), [-1]) * tf.expand_dims(efield, [1]), [1, 2]) * angstrom / electronvolt
             
@@ -149,7 +153,6 @@ class Model(tf.Module):
         input_positions_tmp = inputs['all_positions']
         input_numbers = inputs['all_numbers']
         input_pairs = inputs['pairs']
-        input_lr_pairs = inputs['longrange_pairs']
         input_efield = inputs['efield']
         
         # Collecting all the necessary variables
@@ -191,12 +194,17 @@ class Model(tf.Module):
         charges = self.get_charges(input_numbers, float_type = self.float_type)
 
         if not self.longrange_compute is None:
-            ''' The longrange contributions '''
-            lr_masks = self.compute_masks(input_numbers, input_lr_pairs)
-            lr_gather_center, lr_gather_neighbor = self.make_gather_list(input_lr_pairs, lr_masks['neighbor_mask_int'])
-            lr_dcarts, lr_dists = self.compute_distances(positions, input_numbers, rvec, input_lr_pairs, lr_masks['neighbor_mask_int'], lr_gather_center, lr_gather_neighbor)
-            neighbor_charges = self.get_neighbor_charges(charges, lr_gather_neighbor, lr_masks['neighbor_mask'])
-            energy += self.longrange_compute(charges, neighbor_charges, positions, lr_dists, rvec, lr_masks['elements_mask'], lr_masks['neighbor_mask'], float_type = self.float_type) / electronvolt
+            lr_inputs = {'charges' : charges, 'positions' : positions, 'elements_mask' : masks['elements_mask'], 'rvec' : rvec}
+            if 'longrange_pairs' in inputs.keys():
+                lr_pairs = inputs['lr_pairs']
+                lr_masks = self.compute_masks(numbers, lr_pairs)
+                lr_gather_center, lr_gather_neighbor = self.make_gather_list(lr_pairs, lr_masks['neighbor_mask_int'])
+                lr_dcarts, lr_dists = self.compute_distances(positions, numbers, rvec, lr_pairs, lr_masks['neighbor_mask_int'], lr_gather_center, lr_gather_neighbor)
+                neighbor_charges = self.get_neighbor_charges(charges, lr_gather_neighbor, lr_masks['neighbor_mask'])
+                lr_inputs.update({'neighbor_charges' : neighbor_charges, 'lr_dists' : lr_dists, 'neighbor_mask' : lr_masks['neighbor_mask']})
+            if 'n_grid' in inputs.keys():
+                lr_inputs['n_grid'] = inputs['n_grid']
+            energy += self.longrange_compute(lr_inputs, float_type = self.float_type) / electronvolt
         
         energy += - tf.reduce_sum(positions * tf.expand_dims(tf.cast(charges, dtype = self.float_type), [-1]) * tf.expand_dims(efield, [1]), [1, 2]) * angstrom / electronvolt
         # No need to include reference energies here 
@@ -290,10 +298,9 @@ class Model(tf.Module):
                   'efield' : tf.expand_dims(tf_efield, [0])}
                   
         if not self.longrange_compute is None:
-            if self.float_type == tf.float64:
-                inputs['longrange_pairs'] = tf.expand_dims(cell_list_op.cell_list(tf.cast(all_positions, dtype = tf.float32), tf.cast(tf_rvec, dtype = tf.float32), np.float32(self.longrange_compute.cutoff)), [0])
-            else:
-                inputs['longrange_pairs'] = tf.expand_dims(cell_list_op.cell_list(all_positions, tf_rvec, np.float32(self.longrange_compute.cutoff)), [0])
+            lr_outputs = self.longrange_compute.preprocess({'all_positions' : all_positions, 'rvec' : tf_rvec}, float_type = self.float_type)
+            for key in lr_outputs.keys():
+                inputs[key] = tf.expand_dims(lr_outputs[key], [0])
                 
         return inputs
         
