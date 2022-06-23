@@ -108,22 +108,22 @@ class LongrangeCoulomb(object):
 
 
 class LongrangeEwald(object):
-    def __init__(self, cutoff = 12., alpha = 4./15, gcut = 0.4, sigma = 1.2727922061357857, real_space_cancellation = False):
+    def __init__(self, cutoff = 12., alpha = 4./15, gcut = 0.25, sigma = 1.2727922061357857, real_space_cancellation = True):
+        # Old default settings: cutoff 12, alpha 4./15, gcut 0.4
         self.sigma = sigma
         self.real_space_cancellation = real_space_cancellation
         self.additional_shapes = {'n_grid': [None, 3]}
         self.additional_values = {'n_grid': 0}
+        self.gcut = gcut
         if real_space_cancellation:
-            self.cutoff = 2.0
             self.alpha = 1. / (2 * self.sigma) / angstrom
-            print('Setting the Ewald widths to cancel out the real space contribution.')
+            print('Ewald summation in reciprocal space only with sigma: %f, alpha: %f, gcut: %f' % (sigma, self.alpha, self.gcut))
         else:
             self.cutoff = cutoff
             self.alpha = alpha
             self.additional_shapes['longrange_pairs'] = [None, None, 4]
             self.additional_values['longrange_pairs'] = -1
-        self.gcut = gcut
-        print('Ewald summation with rcut: %f, sigma: %f, alpha: %f, gcut: %f' % (self.cutoff, sigma, self.alpha, self.gcut))
+            print('Ewald summation with rcut: %f, sigma: %f, alpha: %f, gcut: %f' % (self.cutoff, sigma, self.alpha, self.gcut))
         
         
     def preprocess(self, data, float_type = tf.float32):
