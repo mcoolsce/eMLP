@@ -31,15 +31,17 @@ if False:
 strategy = tf.distribute.MirroredStrategy()
 
 with strategy.scope():
+    longrange_compute = LongrangeCoulomb()
+
     # Remove the DataAugmentation() argument, if no data augmentation is needed.
-    train_data = DataSet(['train.tfr'], num_configs = 3090500, cutoff = 4.0, longrange_cutoff = 16.5, batch_size = 64, float_type = 32, num_parallel_calls = 8, 
+    train_data = DataSet(['train.tfr'], num_configs = 3090500, cutoff = 4.0, longrange_compute = longrange_compute, batch_size = 64, float_type = 32, num_parallel_calls = 8, 
                          strategy = strategy, list_of_properties = list_of_properties, augment_data = DataAugmentation())
-    validation_data = DataSet(['validation.tfr'], num_configs = 5676, cutoff = 4.0, longrange_cutoff = 16.5, batch_size = 64, float_type = 32, num_parallel_calls = 8, 
+    validation_data = DataSet(['validation.tfr'], num_configs = 5676, cutoff = 4.0, longrange_compute = longrange_compute, batch_size = 64, float_type = 32, num_parallel_calls = 8, 
                               strategy = strategy, list_of_properties = list_of_properties, test = True)
     
     # Starting from anew
     model = SchNet(cutoff = 4., n_max = 32, num_layers = 4, start = 0.0, end = 4.0, num_filters = 128, num_features = 512, shared_W_interactions = False, float_type = 32, 
-                   cutoff_transition_width = 0.5, reference = ConsistentFragmentsReference('pbe0_aug-cc-pvtz'), longrange_compute = LongrangeCoulomb())  
+                   cutoff_transition_width = 0.5, reference = ConsistentFragmentsReference('pbe0_aug-cc-pvtz'), longrange_compute = longrange_compute)  
     # Starting from an existing model
     #model = SchNet.from_restore_file('resume_name', reference = ConsistentFragmentsReference('pbe0_aug-cc-pvtz'), longrange_compute = LongrangeCoulomb())
       
