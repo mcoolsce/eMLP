@@ -196,10 +196,10 @@ class Model(tf.Module):
         if not self.longrange_compute is None:
             lr_inputs = {'charges' : charges, 'positions' : positions, 'elements_mask' : masks['elements_mask'], 'rvec' : rvec}
             if 'longrange_pairs' in inputs.keys():
-                lr_pairs = inputs['lr_pairs']
-                lr_masks = self.compute_masks(numbers, lr_pairs)
+                lr_pairs = inputs['longrange_pairs']
+                lr_masks = self.compute_masks(input_numbers, lr_pairs)
                 lr_gather_center, lr_gather_neighbor = self.make_gather_list(lr_pairs, lr_masks['neighbor_mask_int'])
-                lr_dcarts, lr_dists = self.compute_distances(positions, numbers, rvec, lr_pairs, lr_masks['neighbor_mask_int'], lr_gather_center, lr_gather_neighbor)
+                lr_dcarts, lr_dists = self.compute_distances(positions, input_numbers, rvec, lr_pairs, lr_masks['neighbor_mask_int'], lr_gather_center, lr_gather_neighbor)
                 neighbor_charges = self.get_neighbor_charges(charges, lr_gather_neighbor, lr_masks['neighbor_mask'])
                 lr_inputs.update({'neighbor_charges' : neighbor_charges, 'lr_dists' : lr_dists, 'neighbor_mask' : lr_masks['neighbor_mask']})
             if 'n_grid' in inputs.keys():
