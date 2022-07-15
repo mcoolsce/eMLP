@@ -1,11 +1,11 @@
 # eMLP
-The electron machine learning potential package
+The electron machine learning potential package.
 
 
 # Installation instructions
 **Requirements:**
 
- - Tensorflow 2.7 or newer
+ - Tensorflow 2.9 or newer
  - [yaff](https://github.com/molmod/yaff)
  - [molmod](https://github.com/molmod/molmod)
  - h5py
@@ -23,4 +23,9 @@ in the cloned directory.
 
 # Examples
 Templates of scripts to train and use the model are located in the `emlp/examples/` directory.
+
+
+# Reference
+The eMLP has been published in the following paper: 
+ - [https://doi.org/10.1021/acs.jctc.1c00978](https://doi.org/10.1021/acs.jctc.1c00978)
 
