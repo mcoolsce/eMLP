@@ -27,8 +27,13 @@ def load_data(filename, filter_centers=False, verbose = False):
   
     
 if __name__ == '__main__':
-    model = SchNet.from_restore_file('model_name', longrange_compute = LongrangeCoulomb(), reference = ConstantFragmentsReference(float_type = tf.float64), float_type = 64, xla = False)
-    filename = 'initial_config_with_centers.xyz'
+    # In this example, we will run an NVT simulation on methane with one of the fully trained models on the eQM7 dataset.
+
+    # First, the model is loaded. The flag xla=True can potentially accelerate GPUs simulates at the expensive of more tracing.
+    model = SchNet.from_restore_file('models/eQM7_aug1', longrange_compute = LongrangeCoulomb(), reference = ConstantFragmentsReference(float_type = tf.float64), float_type = 64, xla = False)
+    
+    # Specify your initial configuration. Here, we load the first configuration of the validation set, which is methane
+    filename = 'data/validation.xyz'
     positions, numbers, centers, rvec = load_data(filename, filter_centers = True)
 
     if rvec is None:
@@ -36,6 +41,8 @@ if __name__ == '__main__':
     else:
         system = System(numbers, positions * angstrom, rvecs = (rvec * angstrom).astype(np.float))
     
+    # Run the MD simulation for 10000 steps, while printing information to the screen every screenprint=10 steps and 
+    # storing the output every nprint=1 steps in the output xyz-file
     NVT(system, model, 10000, centers = centers, screenprint = 10, nprint = 1, dt = 0.5, temp = 300,
-        name = 'output_name', efield = [0.0, 0.0, 0.0], print_opt_steps = False)
+        name = 'md_run1', efield = [0.0, 0.0, 0.0])
     
