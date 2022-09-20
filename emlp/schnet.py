@@ -140,7 +140,7 @@ class OutputLayer(tf.Module):
 
 class SchNet(Model):
     def __init__(self, cutoff = 5., n_max = 25, num_features = 64, start = 0.0, num_layers = 3, end = None, num_filters = -1, cutoff_transition_width = None,
-                 shared_W_interactions = True, **kwargs):
+                 shared_W_interactions = False, **kwargs):
         Model.__init__(self, cutoff, **kwargs) 
         if end is None:
             self.end = cutoff
