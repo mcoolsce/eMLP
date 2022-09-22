@@ -5,7 +5,7 @@ The electron machine learning potential package.
 # Installation instructions
 **Requirements:**
 
- - Tensorflow 2.9 or newer
+ - Tensorflow 2.10 or newer
  - [yaff](https://github.com/molmod/yaff)
  - [molmod](https://github.com/molmod/molmod)
  - h5py
@@ -22,7 +22,7 @@ in the cloned directory.
 
 
 # Examples
-Templates of scripts to train and use the model are located in the `emlp/examples/` directory.
+Templates of scripts and jupyter notebooks to train and use the model are located in the `emlp/examples/` directory.
 
 
 # Reference
